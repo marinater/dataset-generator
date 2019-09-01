@@ -22,9 +22,9 @@ Replace 100 with however many datapoints you want, up to 35,126
 |**stl_generator.py**|Run to generate STL files from a specified NUMBER.txt file|python3 stl_generator.py ***enter NUMBER.txt filename when prompted***
 ### How it Works
 The HouseExpo dataset stores information stored in JSON format with information such as bounding boxes, and room labels, which can then be used to extract low level information directly. However, to extract most higher level information, the original image must be reconstructed using included vertex and bounding box information.
-<center>
-<img src="https://lh3.googleusercontent.com/AOoI3IQZzIokm0Msr2Ru2DrxZBFdmMlqeuGBNHkRaUtSvNi4bCCG_PoBqiXMLAGX3lX2ZZ3WWvKt2A"/>
-</center>
+
+![Graphical Representation](https://lh3.googleusercontent.com/AOoI3IQZzIokm0Msr2Ru2DrxZBFdmMlqeuGBNHkRaUtSvNi4bCCG_PoBqiXMLAGX3lX2ZZ3WWvKt2A "Graphical Representation")
+
  - Room connectivity is found by selectively masking the drawn image for 2 rooms at a time and then adding the two masks. If any blobs are merged after added the two masks, we say that the rooms are connected. This particular definition and process handles the edge cases where a drawn "room" has more than one connected component.
  - To determine room orientation for connected rooms, we convolve 4 times with kernels responsive to north, south, east, and west facing boundaries, selecting whichever one returns the most matches
  - Square footage is found by counting the number of pixels making up each room
@@ -47,4 +47,5 @@ The HouseExpo dataset stores information stored in JSON format with information 
 
 ### About Us
 This repo was made by Samarth Patel for the Rutgers Visual Interfaces Lab
+
 Contact: samarthxpatel@gmail.com
