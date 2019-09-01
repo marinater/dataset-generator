@@ -50,16 +50,6 @@ def draw_map(file_name, json_path):
 
 	return tp_map * 20
 
-def kernelMatch(img, kernel, val_a, val_b):
-	out = np.zeros(img.shape, dtype=np.uint8)
-	for row in range(out.shape[0] - 1):
-		for col in range(out.shape[1] - 1):
-			# print(img[row : row + 2, col : col + 2])
-			if np.array_equal(img[row : row + 2, col : col + 2], kernel):
-				out[row,col] = 255
-				print('MATCH!')
-	return out
-
 def determineConnectivity(img, val_a, center_a, val_b, center_b):
 	kernels = {
 		'north' : [[val_a, val_a],[val_b,val_b]],
@@ -71,16 +61,12 @@ def determineConnectivity(img, val_a, center_a, val_b, center_b):
 	out = np.zeros(img.shape, dtype=np.uint8)
 	out[img == val_a] = 100
 	out[img == val_b] = 200
-	# edges = cv2.Canny(img,100,200)
-	# out += edges
-	# out = kernelMatch(img, kernels['east'], val_a, val_b)
+
 	k = np.array([[-1,-1,-1],[-1,12,-1],[-1,-1,-1]])
 	out = convolve2d(out, k, 'same')
 	
 	door = np.zeros(img.shape, dtype=np.uint8)
 	door[out==100] = 255
-
-	# cv2.imwrite("./tmp/" + str(val_a) + "_" + str(val_b) + '.png', doors)
 
 	if len(np.unique(door)) == 1:
 		return 0
@@ -120,7 +106,8 @@ def generateAdjacency(img):
 
 if __name__ == '__main__':
 	in_map = input('Map ID file (ENTER for default): ').strip()
-	if in_map == '': in_map = 'map_id_100.txt'
+	if in_map == '': in_map = '100.txt'
+	elif in_map.isdigit(): in_map += '.txt'
 
 	json_path = os.path.abspath(os.path.join(os.getcwd(), './json'))
 	map_file = os.path.abspath(os.path.join(os.getcwd(), in_map))

@@ -10,5 +10,5 @@ if __name__ == '__main__':
 
 	map_ids = np.random.choice(map_ids, num_maps, replace=False)
 
-	save_path = "./map_id_" + str(num_maps) + ".txt"
+	save_path = "./" + str(num_maps) + ".txt"
 	np.savetxt(save_path, map_ids, fmt="%s")

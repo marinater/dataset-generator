@@ -1,0 +1,1 @@
+{"0": {"connections": [1, 3, 4, 5], "square_footage": 87750}, "1": {"connections": [0, 2, 3, 4], "square_footage": 250851}, "2": {"connections": [1], "square_footage": 211050}, "3": {"connections": [0, 1, 5], "square_footage": 274859}, "4": {"connections": [0, 1, 5], "square_footage": 246107}, "5": {"connections": [0, 3, 4], "square_footage": 128214}}
