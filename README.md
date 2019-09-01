@@ -1,6 +1,18 @@
-## Dataset-Generator
+## HouseExpo Dataset Generator
+### Usage
+Requirements
+- Python 3.x
+- openCV and numpy python modules
+
+Commands:
+Replace 100 with however many datapoints you want, up to 35,126
+
+    python3 split_generator.py <<< "100"
+    python3 raster2json.py <<< "100.txt"
+    python3 stl_generator.py <<< "100.txt"
+
 ### File Structure
-|file|Purpose|Usage|
+|File / Folder|Purpose|Usage|
 |---|---|---|
 |**json**|Input files directly from the HouseExpo dataset|
 |**out**|Generated output from stl_generator and raster2json|
@@ -10,8 +22,10 @@
 |**stl_generator.py**|Run to generate STL files from a specified NUMBER.txt file|python3 stl_generator.py ***enter NUMBER.txt filename when prompted***
 ### How it Works
 The HouseExpo dataset stores information stored in JSON format with information such as bounding boxes, and room labels, which can then be used to extract low level information directly. However, to extract most higher level information, the original image must be reconstructed using included vertex and bounding box information.
-![Graphical Representation](https://lh3.googleusercontent.com/ChS_nYD95jA_DkZ2cyrGLSKmn7B04kjQmjtwwU814HvmALkybgnZuc7OOZOsO0GwxKRBrWPht7fwPA "Graph Representation")
- - Room connectivity is found by selectively masking the drawn image for 2 rooms at a time and counting the number of connected components, which should be 1 if two rooms are connected, or 2 if not.
+<center>
+<img src="https://lh3.googleusercontent.com/AOoI3IQZzIokm0Msr2Ru2DrxZBFdmMlqeuGBNHkRaUtSvNi4bCCG_PoBqiXMLAGX3lX2ZZ3WWvKt2A"/>
+</center>
+ - Room connectivity is found by selectively masking the drawn image for 2 rooms at a time and then adding the two masks. If any blobs are merged after added the two masks, we say that the rooms are connected. This particular definition and process handles the edge cases where a drawn "room" has more than one connected component.
  - To determine room orientation for connected rooms, we convolve 4 times with kernels responsive to north, south, east, and west facing boundaries, selecting whichever one returns the most matches
  - Square footage is found by counting the number of pixels making up each room
  ### Generated Data Format
@@ -22,11 +36,15 @@ The HouseExpo dataset stores information stored in JSON format with information 
 {
 > *NODE_ID*:  {
 > > 
-> > "connected": [*LIST OF NODE_ID*], 
-> >  "square_footage": *INT*, 
->  >"label": *STRING*
+> > "connected": [*LIST OF NODE_ID*],\
+> >  "square_footage": *INT*,\
+> > "label": *STRING*
 >  
 > }
->  ...*More NODE_IDs in same format*
+>  ... *more NODE_IDs in same format*
+
 }
 
+### About Us
+This repo was made by Samarth Patel for the Rutgers Visual Interfaces Lab
+Contact: samarthxpatel@gmail.com

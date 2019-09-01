@@ -1,1 +1,1 @@
-{"0": {"connections": [2], "square_footage": 277528}, "1": {"connections": [2], "square_footage": 65125}, "2": {"connections": [0, 1], "square_footage": 58491}}
+[{"position": [52, 140], "square_footage": 24242, "connections": [2], "label": "Unknown"}, {"position": [149, 62], "square_footage": 5338, "connections": [2], "label": "Bedroom"}, {"position": [52, 119], "square_footage": 4734, "connections": [0, 1], "label": "Unknown"}]

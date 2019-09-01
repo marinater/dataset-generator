@@ -1,1 +1,1 @@
-{"0": {"connections": [1], "square_footage": 15553}, "1": {"connections": [0, 2, 3], "square_footage": 28182}, "2": {"connections": [1], "square_footage": 37547}, "3": {"connections": [1], "square_footage": 169688}}
+[{"position": [141, 116], "square_footage": 2377, "connections": [1, 2, 3], "label": "Room"}, {"position": [126, 52], "square_footage": 2994, "connections": [0], "label": "Dining_Room"}, {"position": [52, 146], "square_footage": 14413, "connections": [0], "label": "Toilet"}, {"position": [185, 52], "square_footage": 1161, "connections": [0], "label": "Room"}]

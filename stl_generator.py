@@ -7,13 +7,17 @@ from tqdm import tqdm
 
 meter2pixel = 100
 border_pad = 20
-HEIGHT = 50
+HEIGHT = 300
 
 def vert2stl(raw_verts, filename):
 	N = len(raw_verts)
-	
-	vertices = np.array([ [x, 0, z] for x,z in raw_verts] + [ [x, HEIGHT, z] for x,z in raw_verts])
-	faces = np.array([ [i , (i + 1)%N, N + i] for i in range(N) ] + [ [(N + i), N + ((i + 1)%N), (i + 1) %N] for i in range(N) ])
+	M = 2*N
+	maxV = (np.amax(raw_verts[:,0], axis=0), 0, np.amax(raw_verts[:,1], axis=0))
+	minV = (np.amin(raw_verts[:,0], axis=0), 0, np.amin(raw_verts[:,1], axis=0))
+	floorV = [ [*minV], [*maxV], [maxV[0], 0, minV[2]], [minV[0], 0, maxV[2] ]]
+
+	vertices = np.array([ [x, 0, z] for x,z in raw_verts] + [ [x, HEIGHT, z] for x,z in raw_verts] + floorV)
+	faces = np.array([ [i , (i + 1)%N, N + i] for i in range(N) ] + [ [(N + i), N + ((i + 1)%N), (i + 1) %N] for i in range(N) ] + [ [M, M+1, M+2], [M,M+1,M+3]])
 
 	cube = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
 	for i, f in enumerate(faces):

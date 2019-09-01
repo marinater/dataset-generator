@@ -1,1 +1,1 @@
-{"0": {"connections": [2], "square_footage": 39032}, "1": {"connections": [3], "square_footage": 38170}, "2": {"connections": [0, 3], "square_footage": 223916}, "3": {"connections": [1, 2], "square_footage": 224717}}
+[{"position": [359, 52], "square_footage": 3198, "connections": [2], "label": "Unknown"}, {"position": [52, 52], "square_footage": 3034, "connections": [3], "label": "Bedroom"}, {"position": [226, 132], "square_footage": 18641, "connections": [0, 3], "label": "Unknown"}, {"position": [89, 52], "square_footage": 18881, "connections": [1, 2], "label": "Bedroom"}]
