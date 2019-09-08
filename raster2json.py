@@ -3,10 +3,52 @@ import json
 import cv2
 import numpy as np
 from tqdm import tqdm
+from scipy.ndimage.measurements import center_of_mass
+import sys
 
 #Define constants for conversion
 meter2pixel = 30
 border_pad = 50
+COMPLEMENTS = {
+	"north": "south",
+	"south": "north",
+	"east": "west",
+	"west": "east"
+}
+class ImageTiler:
+	windows = []
+
+	def __init__(self, name = 'Dataset Generator'):
+		self.window_name = name
+
+	def clear_tiles(self):
+		cv2.destroyAllWindows()
+		self.windows = []
+
+	def add_tile(self, image):
+		image = np.copy(image)
+
+		if len(image.shape) == 2:
+			image =  np.dstack((image, image, image))
+
+
+
+
+
+		# if there are no windows or the last window is full
+		# add
+		if not self.windows or self.windows[-1].shape[1] + image.shape[1] > 1920:
+			self.windows.append(image)
+		else:
+			print( self.windows[-1].shape, image.shape)
+			self.windows[-1] = np.hstack(( self.windows[-1], image ))
+
+		for index, window in enumerate(self.windows):
+			cv2.imshow(str(index), window)
+
+		[print(window.shape) for window in self.windows]
+
+IMAGE_TILER = ImageTiler()
 
 def draw_base_from_data(file_name, json_path):
 	'''
@@ -36,6 +78,10 @@ def draw_base_from_data(file_name, json_path):
 	cv2.drawContours(footprint, [verts], 0, 0, -1)
 	cv2.drawContours(walls, [verts], 0, 255, 2)
 
+
+	# IMAGE_TILER.add_tile(footprint)
+	# IMAGE_TILER.add_tile(walls)
+
 	return footprint, walls, json_data, boundaries
 
 def draw_base_image(file_name, json_path):
@@ -52,7 +98,7 @@ def draw_base_image(file_name, json_path):
 	x_max, x_min, y_max, y_min = boundaries
 
 	#Create empty canvas to draw on and set starting room label to 1
-	rooms_map = np.full(footprint.shape, 0, dtype=np.uint8)
+	rooms_map = np.zeros(footprint.shape, dtype=np.uint8)
 	fill_val = 1
 
 	#Save bounding box info while iterating as well
@@ -75,7 +121,7 @@ def draw_base_image(file_name, json_path):
 	#Since bounding boxes are rectangular, this 'trims' the rooms to fit einside the house footprint
 	footprint[footprint == 0] |= rooms_map[footprint == 0]
 
-	#Transfer over the walls image to have the walls colored in more thickly  
+	#Transfer over the walls image to have the walls colored in more thickly
 	footprint[walls == 255] = 255
 
 	return footprint, fill_val, boxes
@@ -83,7 +129,7 @@ def draw_base_image(file_name, json_path):
 def label_unknown_rooms(rooms, fill_val):
 	'''
 	Labels regions of the footprint that the JSON data did not label
-	
+
 	Input: rooms_img, start_fill_value
 	Output: fully_labeled_image, ending_fill_value
 	'''
@@ -137,7 +183,37 @@ def determine_connectivity(rooms, pos_a, pos_b):
 	#the masks are combined
 	#Minus 1 to account for the extra background blob
 
-	return combined_count < mask_b_count + mask_a_count - 1
+	isConnected = combined_count < mask_b_count + mask_a_count - 1
+
+	#Now that connectivity is properly determined, we can take the intersection
+	#of the masks to isolate the door. Since we are dilating as part of this,
+	#it was important to ensure that the roooms were originally connected
+	#in the first place to prevent false positives
+
+	if isConnected:
+		mask_a = cv2.dilate(mask_a, np.ones((2,2)), iterations=1)
+		mask_b = cv2.dilate(mask_b, np.ones((2,2)), iterations=1)
+
+		door = (mask_a!=0) & (mask_b!=0).astype(np.uint8)
+
+		rows = np.any(door, axis=1)
+		cols = np.any(door, axis=0)
+		ymin, ymax = np.where(rows)[0][[0, -1]]
+		xmin, xmax = np.where(cols)[0][[0, -1]]
+
+		isDoorVertical = ymax - ymin > xmax - xmin
+
+		center_a = center_of_mass(mask_a)
+		center_b = center_of_mass(mask_b)
+
+		if isDoorVertical:
+			if center_a[1] > center_b[1]: return True, 'east'
+			else: return True, 'west'
+		else:
+			if pos_a[0] > pos_b[0]: return True, 'south'
+			else: return True, 'north'
+
+	else: return False, 'n/a'
 
 def determine_label(boxes, pos):
 	'''
@@ -146,19 +222,19 @@ def determine_label(boxes, pos):
 	Input: bounding_box_info, POI_coordinate,
 	Output: label
 	'''
-	
+
 	#Find the bounding box that contains the input coordinate and returns the label if there is any
 	for label, box in boxes:
-		if box[0] <= pos[0] + 1 <= box[2] and box[1] <= pos[1] + 1 <= box[3]:
+		if box[0] <= pos[1] + 3 <= box[2] and box[1] <= pos[0] + 3 <= box[3]:
 			return label
 	return 'Unknown'
 
-def shift_coord(t, c = 5):
+def shift_coord(t, c = 5, d = 5):
 	'''
 	Reverses coordinate for opencv drawing purposes
 	Also shifts to the bottom right for clarity
 	'''
-	return t[1] + c, t[0] + c
+	return t[1] + c, t[0] + d
 
 def h2rgb(img):
 	'''
@@ -168,10 +244,10 @@ def h2rgb(img):
 	h = img.copy()
 	h[img >= 244] = 0 #Remove lines and circles (drawn in 244 and 255) so normalizing 0-255 works as intended
 
-	s = np.full(h.shape, 200, np.uint8)	
+	s = np.full(h.shape, 200, np.uint8)
 	v = np.full(h.shape, 200, np.uint8)
 
-	v[img == 244] = 0 #Set drawn in lines and circles to be white
+	v[img == 254] = 0 #Set drawn in lines and circles to be white
 	v[img == 255] = 100 #Set background to be grey
 	s[img == 255] = 0 #Set background to be grey
 
@@ -184,17 +260,18 @@ def generate_data(rooms, boxes):
 	'''
 	Collect all data in one place, store, and display
 	'''
+
 	display = rooms.copy()
 	coordinates = []
 
-	for label_value in np.unique(rooms)[:-1]:
+	for index, label_value in enumerate(np.unique(rooms)[:-1]):
 		region = np.nonzero(rooms == label_value)
 
 		coordinate = (region[0][0], region[1][0])
 		coordinates.append(coordinate)
 
-		cv2.circle(display, shift_coord(coordinate), 4, 244, 2)
-
+		cv2.circle(display, shift_coord(coordinate), 4, 254, 2)
+		cv2.putText(display, str(index), shift_coord(coordinate, 10, 20), cv2.FONT_HERSHEY_TRIPLEX, 0.8, 254)
 	data = [
 		{
 			'position': [d.item() for d in c],
@@ -205,34 +282,45 @@ def generate_data(rooms, boxes):
 		for c in coordinates
 	]
 
+	# for d in data:
+		# cv2.putText(display, d['label'], shift_coord(d['position'], 10, 30), cv2.FONT_HERSHEY_TRIPLEX, 0.8, 254)
+
 	for a in range(len(coordinates) - 1):
 		for b in range(a + 1, len(coordinates)):
-			is_connected = determine_connectivity(rooms, coordinates[a], coordinates[b])
+			is_connected, orientation = determine_connectivity(rooms, coordinates[a], coordinates[b])
+
 			if is_connected:
-				cv2.line(display, shift_coord(coordinates[a]), shift_coord(coordinates[b]), 244, 2)
-				data[a]['connections'].append(b)
-				data[b]['connections'].append(a)
+				cv2.line(display, shift_coord(coordinates[a]), shift_coord(coordinates[b]), 254, 2)
+				data[a]['connections'].append({"node": b, "orientation": COMPLEMENTS[orientation]})
+				data[b]['connections'].append({"node": a, "orientation": orientation})
 
 	return h2rgb(display), data
 
 if __name__ == '__main__':
 	map_file = input('Map ID file (ENTER for default): ').strip()
-	if map_file == '': in_map = './100.txt'
-	elif map_file.isdigit(): in_map += '.txt'
+	if map_file == '': map_file = './100.txt'
+	elif map_file.isdigit(): map_file = './{0:}.txt'.format(map_file)
 
 	json_path = './json'
 	save_path = './out'
 
-	map_ids = np.loadtxt('./100.txt', str)
+	map_ids = np.loadtxt(map_file, str)
 
 	if not os.path.exists(save_path):
 		os.mkdir(save_path)
-
+# [130:131]
 	for map_id in tqdm(map_ids):
 		*draw_base_output, boxes = draw_base_image(map_id, json_path)
 		labeled_rooms = label_unknown_rooms(*draw_base_output)
 		display, data = generate_data(labeled_rooms, boxes)
 
+		# IMAGE_TILER.add_tile(display)
+
+		# cv2.waitKey()
+		# IMAGE_TILER.clear_tiles()
+
 		with open('./out/{0:}.json'.format(map_id), 'w') as outfile:
 			json.dump(data, outfile)
 			cv2.imwrite('./out/{0:}.png'.format(map_id), display)
+
+# Image 130 in 35126.txt

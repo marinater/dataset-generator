@@ -1,1 +1,1 @@
-[{"position": [52, 252], "square_footage": 46736, "connections": [1], "label": "Living_Room"}, {"position": [260, 124], "square_footage": 33915, "connections": [0], "label": "Living_Room"}]
+[{"position": [52, 252], "square_footage": 46736, "connections": [{"node": 1, "orientation": "south"}], "label": "Living_Room"}, {"position": [260, 124], "square_footage": 33915, "connections": [{"node": 0, "orientation": "north"}], "label": "Unknown"}]
